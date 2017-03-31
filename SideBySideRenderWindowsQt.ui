@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>574</width>
-    <height>583</height>
+    <width>713</width>
+    <height>588</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,8 +27,8 @@
    <widget class="QVTKWidget" name="qvtkWidgetLeft" native="true">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>100</y>
+      <x>30</x>
+      <y>50</y>
       <width>441</width>
       <height>421</height>
      </rect>
@@ -37,8 +37,8 @@
    <widget class="QCommandLinkButton" name="OpenButton">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>40</y>
+      <x>20</x>
+      <y>10</y>
       <width>185</width>
       <height>41</height>
      </rect>
@@ -47,17 +47,17 @@
      <string>Open</string>
     </property>
    </widget>
-   <widget class="QCommandLinkButton" name="SaveButton">
+   <widget class="QSlider" name="horizontalSlider">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>40</y>
-      <width>185</width>
-      <height>41</height>
+      <x>20</x>
+      <y>530</y>
+      <width>381</width>
+      <height>22</height>
      </rect>
     </property>
-    <property name="text">
-     <string>SaveButton</string>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
    </widget>
   </widget>
