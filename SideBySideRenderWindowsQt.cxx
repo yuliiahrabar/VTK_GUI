@@ -1,113 +1,117 @@
 ﻿#include "SideBySideRenderWindowsQt.h"
 
-//#include <vtkDataObjectToTable.h>
-//#include <vtkElevationFilter.h>
-//#include <vtkPolyDataMapper.h>
-//#include <vtkQtTableView.h>
-//#include <vtkRenderer.h>
-//#include <vtkRenderWindow.h>
-//#include <vtkSphereSource.h>
-//#include <vtkCubeSource.h>
-//#include <vtkSmartPointer.h>
-//#include <vtkGenericDataObjectReader.h>
-//#include <vtkDataObject.h>
-//#include <vtkAlgorithmOutput.h>
 
+
+#include <vtkPolyDataReader.h>
+#include <vtkCamera.h>
 // Constructor
 SideBySideRenderWindowsQt::SideBySideRenderWindowsQt() 
 {
-  this->setupUi(this);
- 
-  // Set up action signals and slots
-  
-  connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
+    this->setupUi(this);
+    renderer = vtkSmartPointer<vtkRenderer>::New();
 
-  connect(this->OpenButton, SIGNAL(clicked()), this, SLOT(loading_files()));
-  
-  connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
+    // VTK/Qt aedded
+    this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
+    this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->Render();
+
+    objectMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    objectActor =  vtkSmartPointer<vtkActor>::New();
+    // Create pipeline
+    objectActor->SetMapper(objectMapper);
+    renderer->AddActor(objectActor);
+
+    qvtkWidgetLeft->update();
+
+    // Set up action signals and slots
+    connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
+    connect(this->OpenButton, SIGNAL(clicked()), this, SLOT(loading_files()));
+    connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
+
+    // Let the horizontal slider be disabled before loading file.
+    // otherwise changing value will cause segfault
+    this->horizontalSlider->setEnabled(false);
 }
-
 
 void SideBySideRenderWindowsQt::slotExit() 
 {
-  qApp->exit();
+    qApp->exit();
 }
 
-template<class TReader> vtkAlgorithmOutput *readVTKfile(std::string fileName)
+template<class TReader>
+vtkSmartPointer<vtkPolyData> readVTKfile(std::string fileName)
 {
-	vtkSmartPointer<TReader> reader =
-		vtkSmartPointer<TReader>::New();
-	reader->SetFileName(fileName.c_str());
-	reader->Update();
-	reader->GetOutput()->Register(reader);
-	// Cheking reader:
-	if (reader->IsFilePolyData())
-	{
-		std::cout << "output is a polydata" << std::endl;
-		vtkPolyData* output = reader->GetPolyDataOutput();
-		std::cout << "output has " << output->GetNumberOfPoints() << " points." << std::endl;
-	}
-	vtkAlgorithmOutput *pd = dynamic_cast<vtkAlgorithmOutput *>(reader->GetOutput());
-	return pd;
+    vtkSmartPointer<TReader> reader =
+            vtkSmartPointer<TReader>::New();
+    reader->SetFileName(fileName.c_str());
+    reader->Update();
+    reader->GetOutput()->Register(reader);
+    // Cheking reader:
+    if (reader->IsFilePolyData())
+    {
+        std::cout << "output is a polydata" << std::endl;
+        vtkSmartPointer<vtkPolyData> output = reader->GetOutput();
+        std::cout << "output has " << output->GetNumberOfPoints() << " points." << std::endl;
+    }
+    vtkSmartPointer<vtkPolyData> pd = reader->GetOutput();
+    return pd;
 }
 
-void SideBySideRenderWindowsQt::fill_data_vector()
+QStringList SideBySideRenderWindowsQt::getFileNames()
 {
-	QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Choose"), "", tr("Vtk files (*.vtk)"));
-	//std::vector<std::string> inputFilenames(filenames.count());
-	std::vector<std::string> inputFilenames;
-	inputFilenames.reserve(filenames.count());
-	foreach(QString str, filenames) {
-		inputFilenames.push_back(str.toStdString());
-	}
-	data.resize(inputFilenames.size());
+    return QFileDialog::getOpenFileNames(this, tr("Choose"), "", tr("Vtk files (*.vtk)"));
+}
 
-	vtkSmartPointer<vtkGenericDataObjectReader> reader =
-		vtkSmartPointer<vtkGenericDataObjectReader>::New();
+void SideBySideRenderWindowsQt::fill_data_vector(const QStringList &filenames)
+{
+    // Let's use the vtkPolyData directly later we can change it for
+    // something more general
+    vtkSmartPointer<vtkPolyDataReader> reader =
+            vtkSmartPointer<vtkPolyDataReader>::New();
 
-	cout << "Input files: " << endl;
-	for (int i = 0; i < inputFilenames.size(); i++)
-	{
-		cout << inputFilenames[i] << endl;
-		data[i] = readVTKfile<vtkGenericDataObjectReader>(inputFilenames[i]);
-	}
-
+    for (int i = 0; i < filenames.size(); i++)
+    {
+        //convert to std::string once
+        std::string fname = filenames[i].toStdString();
+        cout << fname << endl;
+        data.push_back(readVTKfile<vtkPolyDataReader>(fname));
+    }
 }
 
 void  SideBySideRenderWindowsQt::loading_files()
 {
-	fill_data_vector();
-	cout << "Data size: " << data.size() << endl;
-	this->horizontalSlider->setMinimum(0);
-	this->horizontalSlider->setMaximum(data.size()-1);
+    QStringList files = getFileNames();
+    if (files.empty())
+    {
+        return;
+    }
+
+    fill_data_vector(files);
+
+    //enable slider;
+    this->horizontalSlider->setEnabled(true);
+
+    cout << "Data size: " << data.size() << endl;
+    this->horizontalSlider->setMinimum(0);
+    this->horizontalSlider->setMaximum(data.size()-1);
+
+    // Update display widget
+    show_file();
 }
 
 void SideBySideRenderWindowsQt::show_file()
 {
-	int id = this -> horizontalSlider->value();
-	cout << "Slider value: " << id << endl;
-	
-	// VTK Mapper
-	vtkSmartPointer<vtkPolyDataMapper> objectMapper =
-		vtkSmartPointer<vtkPolyDataMapper>::New();
+    int id = this -> horizontalSlider->value();
+    cout << "Slider value: " << id << endl;
 
-	objectMapper->SetInputConnection(data[id]);
+    //Change data
+    objectMapper->SetInputData(data[id]);
 
-	vtkSmartPointer<vtkActor> objectActor =
-		vtkSmartPointer<vtkActor>::New();
-	objectActor->SetMapper(objectMapper);
+    //Automatically set up the camera based on the visible actors.
+    renderer->ResetCamera();
 
-	// VTK Renderer
-	vtkSmartPointer<vtkRenderer> renderer =
-		vtkSmartPointer<vtkRenderer>::New();
-	renderer->AddActor(objectActor);
+    // Calls also update for all connected objects in pipeline
+    // like actor, object mapper etc.
+    qvtkWidgetLeft->update();
 
-	// VTK/Qt wedded
-	this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
-	this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->Render();
-	qvtkWidgetLeft->update();
-	qvtkWidgetLeft->updateGeometry();
-	this->update();
-	this->updateGeometry();
-	cout << "qvtkWidget updated." << endl;
+    cout << "qvtkWidget updated." << endl;
 }
