@@ -4,6 +4,7 @@
 #include <vtkCamera.h>
 
 
+
 // Constructor
 VTK_GUI_Qt::VTK_GUI_Qt()
 {
@@ -48,12 +49,12 @@ vtkSmartPointer<vtkPolyData> readVTKfile(std::string fileName)
 	reader->GetOutput()->Register(reader);
 	// Cheking reader:
 	if (reader->IsFilePolyData())
-	{
+	
 		std::cout << "output is a polydata" << std::endl;
-		vtkSmartPointer<vtkPolyData> output = reader->GetOutput();
+		vtkSmartPointer<vtkPolyData> output = reader->GetPolyDataOutput();
 		std::cout << "output has " << output->GetNumberOfPoints() << " points." << std::endl;
-	}
-	vtkSmartPointer<vtkPolyData> pd = reader->GetOutput();
+	
+	vtkSmartPointer<vtkPolyData> pd = reader->GetPolyDataOutput();
 	return pd;
 }
 
@@ -66,15 +67,15 @@ void VTK_GUI_Qt::fill_data_vector(const QStringList &filenames)
 {
 	// Let's use the vtkPolyData directly later we can change it for
 	// something more general
-	vtkSmartPointer<vtkPolyDataReader> reader =
-		vtkSmartPointer<vtkPolyDataReader>::New();
 
 	for (int i = 0; i < filenames.size(); i++)
 	{
 		//convert to std::string once
 		std::string fname = filenames[i].toStdString();
 		cout << fname << endl;
-		data.push_back(readVTKfile<vtkPolyDataReader>(fname));
+
+		// GenericDataObjectReader allowes to work with files containing both PolyData and UnstructuredGrid 
+		data.push_back(readVTKfile<vtkGenericDataObjectReader>(fname));
 	}
 }
 
@@ -103,9 +104,10 @@ void VTK_GUI_Qt::show_file()
 {
 	int id = this->horizontalSlider->value();
 	cout << "Slider value: " << id << endl;
-
+	
 	//Change data
 	objectMapper->SetInputData(data[id]);
+	//objectMapper->SetInputConnection(data[id]);
 
 	//Automatically set up the camera based on the visible actors.
 	renderer->ResetCamera();

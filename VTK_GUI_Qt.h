@@ -12,7 +12,17 @@
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
-
+#include <vtkSmartPointer.h>
+#include <vtkStructuredGridReader.h>
+#include <vtkStructuredGridGeometryFilter.h>
+#include <vtkGenericDataObjectReader.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGridReader.h>
+#include <vtkDataSet.h>
+#include <vtkDataSetMapper.h>
+#include <vtkAlgorithmOutput.h>
+#include <vtkUnstructuredGrid.h>
 
 class VTK_GUI_Qt : public QMainWindow, private Ui::VTK_GUI_Qt
 {
@@ -30,15 +40,19 @@ private:
 	// proper destruction of this object. vtkSmartPointer will do
 	// the job for us (reference counting)
 	std::vector<vtkSmartPointer<vtkPolyData>> data;
-
+	//std::vector<vtkSmartPointer<vtkUnstructuredGrid>> data;
+	//std::vector<vtkSmartPointer<vtkPolyData>> data;
+	
 	// To avoid gitches in display window let's have
 	// renderer available from very beginning
 	vtkSmartPointer<vtkRenderer> renderer;
 
 	// Don't create object mapper and rest of the
 	// rendering pipeline every time when show_file is called
+	
 	vtkSmartPointer<vtkPolyDataMapper> objectMapper;
-
+	
+	//vtkSmartPointer<vtkDataSetMapper> objectMapper;
 	// Same as above
 	vtkSmartPointer<vtkActor> objectActor;
 	
