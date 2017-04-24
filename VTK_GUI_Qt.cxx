@@ -15,7 +15,7 @@ VTK_GUI_Qt::VTK_GUI_Qt()
 	this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
 	this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->Render();
 
-	objectMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	objectMapper = vtkSmartPointer<vtkDataSetMapper>::New();
 	objectActor = vtkSmartPointer<vtkActor>::New();
 	// Create pipeline
 	objectActor->SetMapper(objectMapper);
@@ -38,7 +38,7 @@ void VTK_GUI_Qt::slotExit()
 {
 	qApp->exit();
 }
-
+/*
 template<class TReader>
 vtkSmartPointer<vtkPolyData> readVTKfile(std::string fileName)
 {
@@ -57,6 +57,21 @@ vtkSmartPointer<vtkPolyData> readVTKfile(std::string fileName)
 	vtkSmartPointer<vtkPolyData> pd = reader->GetPolyDataOutput();
 	return pd;
 }
+*/
+
+template<class TReader>
+vtkSmartPointer<vtkAlgorithmOutput> readVTKfile(std::string fileName)
+{
+	vtkSmartPointer<TReader> reader =
+		vtkSmartPointer<TReader>::New();
+	reader->SetFileName(fileName.c_str());
+	reader->Update();
+
+	//vtkSmartPointer<vtkAlgorithmOutput> pd = reader->GetOutputPort();
+	//return pd;
+	return reader->GetOutputPort();
+}
+
 
 QStringList VTK_GUI_Qt::getFileNames()
 {
@@ -75,7 +90,7 @@ void VTK_GUI_Qt::fill_data_vector(const QStringList &filenames)
 		cout << fname << endl;
 
 		// GenericDataObjectReader allowes to work with files containing both PolyData and UnstructuredGrid 
-		data.push_back(readVTKfile<vtkGenericDataObjectReader>(fname));
+		data.push_back(readVTKfile<vtkUnstructuredGridReader>(fname));
 	}
 }
 
@@ -104,9 +119,9 @@ void VTK_GUI_Qt::show_file()
 {
 	int id = this->horizontalSlider->value();
 	cout << "Slider value: " << id << endl;
-	
+
 	//Change data
-	objectMapper->SetInputData(data[id]);
+	objectMapper->SetInputConnection(data[id]);
 	//objectMapper->SetInputConnection(data[id]);
 
 	//Automatically set up the camera based on the visible actors.
@@ -117,4 +132,5 @@ void VTK_GUI_Qt::show_file()
 	qvtkWidgetLeft->update();
 
 	cout << "qvtkWidget updated." << endl;
+
 }

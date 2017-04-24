@@ -9,8 +9,8 @@
 
 // Let us have just necessary headers
 #include <vtkRenderer.h>
-#include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
+//#include <vtkPolyData.h>
+//#include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
 #include <vtkStructuredGridReader.h>
@@ -39,9 +39,9 @@ private:
 	// With vtkSmartPointer we don't have to worry about
 	// proper destruction of this object. vtkSmartPointer will do
 	// the job for us (reference counting)
-	std::vector<vtkSmartPointer<vtkPolyData>> data;
-	//std::vector<vtkSmartPointer<vtkUnstructuredGrid>> data;
+	
 	//std::vector<vtkSmartPointer<vtkPolyData>> data;
+	std::vector<vtkSmartPointer<vtkAlgorithmOutput>> data;
 	
 	// To avoid gitches in display window let's have
 	// renderer available from very beginning
@@ -50,9 +50,9 @@ private:
 	// Don't create object mapper and rest of the
 	// rendering pipeline every time when show_file is called
 	
-	vtkSmartPointer<vtkPolyDataMapper> objectMapper;
-	
+	vtkSmartPointer<vtkDataSetMapper> objectMapper;
 	//vtkSmartPointer<vtkDataSetMapper> objectMapper;
+	
 	// Same as above
 	vtkSmartPointer<vtkActor> objectActor;
 	
