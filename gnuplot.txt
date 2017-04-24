@@ -1,0 +1,7 @@
+p 'lattice.txt' w l lt 3 linecolor 2, \
+'position.txt' w l lt 3 linecolor 1
+
+set yrange[0:50]
+set xrange[0:(50*sqrt(2)/2.)]
+plot 'lattice.txt' using ($1*(sqrt(2)/2.)):2  w l lt 3 linecolor 2, \
+'position.txt' using ($1*(sqrt(2)/2.)):2 w l lt 3 linecolor 1
