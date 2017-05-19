@@ -1,6 +1,6 @@
 ﻿#include "VTK_GUI_Qt.h"
 
-#include <vtkPolyDataReader.h>
+#include <vtkGenericDataObjectReader.h>
 #include <vtkCamera.h>
 
 
@@ -9,24 +9,11 @@
 VTK_GUI_Qt::VTK_GUI_Qt()
 {
 	this->setupUi(this);
-	renderer = vtkSmartPointer<vtkRenderer>::New();
-
-	// VTK/Qt aedded
-	this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
-	this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->Render();
-
-	objectMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	objectActor = vtkSmartPointer<vtkActor>::New();
-	// Create pipeline
-	objectActor->SetMapper(objectMapper);
-	renderer->AddActor(objectActor);
-
-	qvtkWidgetLeft->update();
 
 	// Set up action signals and slots
 	connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
 	connect(this->OpenButton, SIGNAL(clicked()), this, SLOT(loading_files()));
-	connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
+	//connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
 
 	// Let the horizontal slider be disabled before loading file.
 	// otherwise changing value will cause segfault
@@ -38,99 +25,58 @@ void VTK_GUI_Qt::slotExit()
 {
 	qApp->exit();
 }
-/*
-template<class TReader>
-vtkSmartPointer<vtkPolyData> readVTKfile(std::string fileName)
-{
-	vtkSmartPointer<TReader> reader =
-		vtkSmartPointer<TReader>::New();
-	reader->SetFileName(fileName.c_str());
-	reader->Update();
-	reader->GetOutput()->Register(reader);
-	// Cheking reader:
-	if (reader->IsFilePolyData())
-	
-		std::cout << "output is a polydata" << std::endl;
-		vtkSmartPointer<vtkPolyData> output = reader->GetPolyDataOutput();
-		std::cout << "output has " << output->GetNumberOfPoints() << " points." << std::endl;
-	
-	vtkSmartPointer<vtkPolyData> pd = reader->GetPolyDataOutput();
-	return pd;
-}
-*/
 
-template<class TReader>
-vtkSmartPointer<vtkAlgorithmOutput> readVTKfile(std::string fileName)
-{
-	vtkSmartPointer<TReader> reader =
-		vtkSmartPointer<TReader>::New();
-	reader->SetFileName(fileName.c_str());
-	reader->Update();
-
-	//vtkSmartPointer<vtkAlgorithmOutput> pd = reader->GetOutputPort();
-	//return pd;
-	return reader->GetOutputPort();
-}
-
-
-QStringList VTK_GUI_Qt::getFileNames()
-{
-	return QFileDialog::getOpenFileNames(this, tr("Choose"), "", tr("Vtk files (*.vtk)"));
-}
-
-void VTK_GUI_Qt::fill_data_vector(const QStringList &filenames)
-{
-	// Let's use the vtkPolyData directly later we can change it for
-	// something more general
-
-	for (int i = 0; i < filenames.size(); i++)
-	{
-		//convert to std::string once
-		std::string fname = filenames[i].toStdString();
-		cout << fname << endl;
-
-		// GenericDataObjectReader allowes to work with files containing both PolyData and UnstructuredGrid 
-		data.push_back(readVTKfile<vtkUnstructuredGridReader>(fname));
-	}
-}
 
 void  VTK_GUI_Qt::loading_files()
 {
-	QStringList files = getFileNames();
-	if (files.empty())
-	{
-		return;
-	}
+	this->setupUi(this);
 
-	fill_data_vector(files);
+	std::string filename = "C:/Users/YULIA/Desktop/CFD_199500.vtk";
+	//std::string filename = "C:/Users/YULIA/Desktop/frac_frontBack_199500.vtk";
 
-	//enable slider;
-	this->horizontalSlider->setEnabled(true);
+	vtkSmartPointer<vtkGenericDataObjectReader> reader =
+		vtkSmartPointer<vtkGenericDataObjectReader>::New();
 
-	cout << "Data size: " << data.size() << endl;
-	this->horizontalSlider->setMinimum(0);
-	this->horizontalSlider->setMaximum(data.size() - 1);
+	reader->SetFileName(filename.c_str());
+	reader->Update();
 
-	// Update display widget
-	show_file();
+	vtkSmartPointer<vtkPolyData> polydata =
+		vtkSmartPointer<vtkPolyData>::New();
+	std::vector<vtkSmartPointer<vtkPolyData>> polydataVector;
+	polydata->ShallowCopy(reader->GetOutput());
+	polydataVector.push_back(polydata);
+
+	std::cout << "output has " << polydataVector[0]->GetNumberOfPoints() << " points." << std::endl;
+
+	std::vector<vtkAlgorithmOutput *> mapperDataVector;
+	vtkAlgorithmOutput * pd;
+
+	pd = reader->GetOutputPort();
+
+	mapperDataVector.push_back(pd);
+
+	//Create a mapper and actor
+	vtkSmartPointer<vtkDataSetMapper> mapper =
+		vtkSmartPointer<vtkDataSetMapper>::New();
+
+	mapper->SetInputConnection(mapperDataVector[0]);
+
+	vtkSmartPointer<vtkActor> actor =
+		vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
+
+	// VTK Renderer
+	vtkSmartPointer<vtkRenderer> renderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	renderer->AddActor(actor);
+
+	vtkSmartPointer<vtkRenderer> rightRenderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	// VTK/Qt wedded
+	this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
+
+	// Set up action signals and slots
+	connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
 }
 
-void VTK_GUI_Qt::show_file()
-{
-	int id = this->horizontalSlider->value();
-	cout << "Slider value: " << id << endl;
 
-	//Change data
-	objectMapper->SetInputConnection(data[id]);
-	//objectMapper->SetInputConnection(data[id]);
-
-	//Automatically set up the camera based on the visible actors.
-	renderer->ResetCamera();
-
-	// Calls also update for all connected objects in pipeline
-	// like actor, object mapper etc.
-	qvtkWidgetLeft->update();
-
-	cout << "qvtkWidget updated." << endl;
-
-}

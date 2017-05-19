@@ -9,8 +9,8 @@
 
 // Let us have just necessary headers
 #include <vtkRenderer.h>
-//#include <vtkPolyData.h>
-//#include <vtkPolyDataMapper.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
 #include <vtkStructuredGridReader.h>
@@ -23,6 +23,8 @@
 #include <vtkDataSetMapper.h>
 #include <vtkAlgorithmOutput.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkPolyDataReader.h>
+#include <vtkCamera.h>
 
 class VTK_GUI_Qt : public QMainWindow, private Ui::VTK_GUI_Qt
 {
@@ -35,35 +37,15 @@ public:
 
 private:
 	Ui::VTK_GUI_Qt *ui;
-
-	// With vtkSmartPointer we don't have to worry about
-	// proper destruction of this object. vtkSmartPointer will do
-	// the job for us (reference counting)
-	
-	//std::vector<vtkSmartPointer<vtkPolyData>> data;
-	std::vector<vtkSmartPointer<vtkAlgorithmOutput>> data;
-	
-	// To avoid gitches in display window let's have
-	// renderer available from very beginning
-	vtkSmartPointer<vtkRenderer> renderer;
-
-	// Don't create object mapper and rest of the
-	// rendering pipeline every time when show_file is called
-	
-	vtkSmartPointer<vtkDataSetMapper> objectMapper;
-	//vtkSmartPointer<vtkDataSetMapper> objectMapper;
-	
-	// Same as above
-	vtkSmartPointer<vtkActor> objectActor;
 	
 public slots:
   virtual void slotExit();
 
  private slots:
- void fill_data_vector(const QStringList& filenames);
- QStringList getFileNames();
+// void fill_data_vector(const QStringList& filenames);
+// QStringList getFileNames();
  void loading_files();
- void show_file();
+ //void show_file();
 };
 
 #endif
