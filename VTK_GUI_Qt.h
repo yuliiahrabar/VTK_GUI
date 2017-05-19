@@ -25,6 +25,7 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkPolyDataReader.h>
 #include <vtkCamera.h>
+#include <vtkDataSet.h>
 
 class VTK_GUI_Qt : public QMainWindow, private Ui::VTK_GUI_Qt
 {
@@ -37,15 +38,22 @@ public:
 
 private:
 	Ui::VTK_GUI_Qt *ui;
-	
-public slots:
-  virtual void slotExit();
 
- private slots:
-// void fill_data_vector(const QStringList& filenames);
-// QStringList getFileNames();
- void loading_files();
- //void show_file();
+	// vector filled with polydata for use in filters
+	std::vector<vtkSmartPointer<vtkPolyData>> polydataVector;
+
+	// vector filled with AlgorithmOutput for correct mapping both Unstructured Grid and Polydata
+	std::vector<vtkAlgorithmOutput *> mapperDataVector;
+	
+
+public slots:
+	virtual void slotExit();
+
+private slots:
+	void fill_data_vector(const QStringList& filenames);
+	QStringList getFileNames();
+	void loading_files();
+	void show_file();
 };
 
 #endif

@@ -2,8 +2,7 @@
 
 #include <vtkGenericDataObjectReader.h>
 #include <vtkCamera.h>
-
-
+#include <vtkCleanPolyData.h>
 
 // Constructor
 VTK_GUI_Qt::VTK_GUI_Qt()
@@ -13,7 +12,7 @@ VTK_GUI_Qt::VTK_GUI_Qt()
 	// Set up action signals and slots
 	connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
 	connect(this->OpenButton, SIGNAL(clicked()), this, SLOT(loading_files()));
-	//connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
+	connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
 
 	// Let the horizontal slider be disabled before loading file.
 	// otherwise changing value will cause segfault
@@ -26,41 +25,71 @@ void VTK_GUI_Qt::slotExit()
 	qApp->exit();
 }
 
-
-void  VTK_GUI_Qt::loading_files()
+QStringList VTK_GUI_Qt::getFileNames()
 {
-	this->setupUi(this);
+	return QFileDialog::getOpenFileNames(this, tr("Choose"), "", tr("Vtk files (*.vtk)"));
+}
 
-	std::string filename = "C:/Users/YULIA/Desktop/CFD_199500.vtk";
-	//std::string filename = "C:/Users/YULIA/Desktop/frac_frontBack_199500.vtk";
+void VTK_GUI_Qt::fill_data_vector(const QStringList &filenames)
+{
+	for (int i = 0; i < filenames.size(); i++)
+	{
+		//convert to std::string once
+		std::string filename = filenames[i].toStdString();
+		cout << filename << endl;
 
-	vtkSmartPointer<vtkGenericDataObjectReader> reader =
-		vtkSmartPointer<vtkGenericDataObjectReader>::New();
+		// GenericDataObjectReader allowes to work with files containing both PolyData and UnstructuredGrid 
 
-	reader->SetFileName(filename.c_str());
-	reader->Update();
+		vtkSmartPointer<vtkGenericDataObjectReader> reader =
+			vtkSmartPointer<vtkGenericDataObjectReader>::New();
 
-	vtkSmartPointer<vtkPolyData> polydata =
-		vtkSmartPointer<vtkPolyData>::New();
-	std::vector<vtkSmartPointer<vtkPolyData>> polydataVector;
-	polydata->ShallowCopy(reader->GetOutput());
-	polydataVector.push_back(polydata);
+		reader->SetFileName(filename.c_str());
+		reader->Update();
 
-	std::cout << "output has " << polydataVector[0]->GetNumberOfPoints() << " points." << std::endl;
+		vtkSmartPointer<vtkPolyData> polydata =
+			vtkSmartPointer<vtkPolyData>::New();
 
-	std::vector<vtkAlgorithmOutput *> mapperDataVector;
-	vtkAlgorithmOutput * pd;
+		polydata->ShallowCopy(reader->GetOutput());
 
-	pd = reader->GetOutputPort();
+		polydataVector.push_back(polydata);
 
-	mapperDataVector.push_back(pd);
+		std::cout << "output has " << polydata->GetNumberOfPoints() << " points." << std::endl;
+
+		vtkAlgorithmOutput * pd;
+		pd = reader->GetOutputPort();
+		mapperDataVector.push_back(pd);
+		pd->Print(std::cout);
+
+
+	}
+}
+
+void  VTK_GUI_Qt::show_file()
+{
+	//this->setupUi(this);
+	
+	int id = this->horizontalSlider->value();
+	cout << "Slider value: " << id << endl;
 
 	//Create a mapper and actor
+	
+
+	//vtkSmartPointer<vtkPolyDataMapper> mapper =
+	//	vtkSmartPointer<vtkPolyDataMapper>::New();
+
+	//vtkSmartPointer<vtkCleanPolyData> cleanPolydata =
+	//	vtkSmartPointer<vtkCleanPolyData>::New();
+
+	//cleanPolydata -> SetInputData(polydataVector[id]);
+
+	//mapper->SetInputConnection(cleanPolydata->GetOutputPort());
+
 	vtkSmartPointer<vtkDataSetMapper> mapper =
 		vtkSmartPointer<vtkDataSetMapper>::New();
 
-	mapper->SetInputConnection(mapperDataVector[0]);
-
+	//mapper->SetInputConnection(mapperDataVector[id]);
+	
+	mapper->SetInputData(polydataVector[id]);
 	vtkSmartPointer<vtkActor> actor =
 		vtkSmartPointer<vtkActor>::New();
 	actor->SetMapper(mapper);
@@ -75,8 +104,30 @@ void  VTK_GUI_Qt::loading_files()
 	// VTK/Qt wedded
 	this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
 
-	// Set up action signals and slots
-	connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
+	////Set up action signals and slots
+	//connect(this->actionExit, SIGNAL(triggered()), this, SLOT(slotExit()));
+
+	cout << "QVTKWidget updated." << endl;
 }
 
+void  VTK_GUI_Qt::loading_files()
+{
+	QStringList files = getFileNames();
+	if (files.empty())
+	{
+		return;
+	}
 
+	fill_data_vector(files);
+
+	//enable slider;
+	this->horizontalSlider->setEnabled(true);
+
+//	cout << "Data size: " << mapperDataVector.size() << endl;
+	this->horizontalSlider->setMinimum(0);
+	this->horizontalSlider->setMaximum(polydataVector.size() - 1);
+
+	this->qvtkWidgetLeft->update();
+	// Update display widget
+	//show_file();
+}
