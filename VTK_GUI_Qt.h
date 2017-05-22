@@ -10,22 +10,21 @@
 // Let us have just necessary headers
 #include <vtkRenderer.h>
 #include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
-#include <vtkStructuredGridReader.h>
-#include <vtkStructuredGridGeometryFilter.h>
 #include <vtkGenericDataObjectReader.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkUnstructuredGridReader.h>
 #include <vtkDataSet.h>
 #include <vtkDataSetMapper.h>
-#include <vtkAlgorithmOutput.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkPolyDataReader.h>
 #include <vtkCamera.h>
-#include <vtkDataSet.h>
+#include <vtkCamera.h>
+#include <vtkCellData.h>
+#include <vtkPointData.h>
+#include <vtkDataSetMapper.h>
+#include <vtkNamedColors.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkLookupTable.h>
+#include <vtkFloatArray.h>
 
 class VTK_GUI_Qt : public QMainWindow, private Ui::VTK_GUI_Qt
 {
@@ -39,11 +38,13 @@ public:
 private:
 	Ui::VTK_GUI_Qt *ui;
 
+	int sliderId;
+
 	// vector filled with polydata for use in filters
 	std::vector<vtkSmartPointer<vtkPolyData>> polydataVector;
 
-	// vector filled with AlgorithmOutput for correct mapping both Unstructured Grid and Polydata
-	std::vector<vtkAlgorithmOutput *> mapperDataVector;
+	// vector for correct mapping both Unstructured Grid and Polydata
+	std::vector<vtkSmartPointer<vtkGenericDataObjectReader>> mapperDataVector;
 	
 
 public slots:
@@ -54,6 +55,9 @@ private slots:
 	QStringList getFileNames();
 	void loading_files();
 	void show_file();
+	void color_update();
+	void pointData_comboBox();
+	void cellData_comboBox();
 };
 
 #endif
