@@ -10,10 +10,11 @@ VTK_GUI_Qt::VTK_GUI_Qt()
 	connect(this->ExitButton, SIGNAL(clicked()), this, SLOT(close()));
 	connect(this->OpenButton, SIGNAL(clicked()), this, SLOT(loading_files()));
 	connect(this->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(show_file()));
+
 	connect(this->radioButton, SIGNAL(clicked()), this, SLOT(pointData_comboBox()));
 	connect(this->radioButton_2, SIGNAL(clicked()), this, SLOT(cellData_comboBox()));
 	connect(this->updateButton, SIGNAL(clicked()), this, SLOT(color_update()));
-	
+
 	// Let the horizontal slider be disabled before loading file.
 	// otherwise changing value will cause segfault
 	this->horizontalSlider->setEnabled(false);
@@ -28,10 +29,6 @@ void VTK_GUI_Qt::slotExit()
 	qApp->exit();
 }
 
-QStringList VTK_GUI_Qt::getFileNames()
-{
-	return QFileDialog::getOpenFileNames(this, tr("Choose"), "", tr("Vtk files (*.vtk)"));
-}
 
 void VTK_GUI_Qt::pointData_comboBox()
 {
@@ -50,7 +47,6 @@ void VTK_GUI_Qt::pointData_comboBox()
 		if (arrayRange[0]!=arrayRange[1])
 			this->comboBox->addItem(polydata->GetPointData()->GetArrayName(i), QVariant(i));
 	}
-
 }
 
 void VTK_GUI_Qt::cellData_comboBox()
@@ -69,8 +65,8 @@ void VTK_GUI_Qt::cellData_comboBox()
 		if (arrayRange[0] != arrayRange[1])
 			this->comboBox->addItem(polydata->GetCellData()->GetArrayName(i), QVariant(i));
 	}
-
 }
+
 
 template <typename T>
 void PrintColour(T &rgb)
@@ -141,24 +137,42 @@ void MakeCellData(size_t const & tableSize, int arr_num, vtkPolyData* polydata, 
 	}
 }
 
-void VTK_GUI_Qt::color_update()
+
+void VTK_GUI_Qt::color_polydata(int arrNum)
 {
 	vtkSmartPointer<vtkNamedColors> nc =
 		vtkSmartPointer<vtkNamedColors>::New();
 
-	vtkSmartPointer<vtkPolyData> polydata =
+	vtkSmartPointer<vtkPolyData> dataToColor =
 		vtkSmartPointer<vtkPolyData>::New();
-	polydata->ShallowCopy(mapperDataVector[sliderId]->GetOutput());
 
-	QString arrName = this->comboBox->currentText();
-	int arrNum = this->comboBox->itemData(this->comboBox->currentIndex()).toInt();
-
-	cout << arrName.toStdString() << " " << arrNum << endl;
+	dataToColor = vtkPolyData::SafeDownCast(mapperDataVector[sliderId]->GetOutput());
 	
 	double arrayRange[2];
-	polydata->GetCellData()->GetArray(arrNum)->GetRange(arrayRange);
-	cout << "Range of values for array" << arrayRange[0] << " " << arrayRange[1] << endl;
+	if (this->radioButton->isChecked() == true)
+	{
+		dataToColor->GetPointData()->GetArray(arrNum)->GetRange(arrayRange);
+	}
+	else 
+	{
+		dataToColor->GetCellData()->GetArray(arrNum)->GetRange(arrayRange);
+	}
+	
+	cout << "Range of values for array: " << arrayRange[0] << ":" << arrayRange[1] << endl;
+	
 	double scaleRange = arrayRange[1] - arrayRange[0];
+	
+	int tableSize;
+	if (this->radioButton->isChecked() == true)
+	{
+		tableSize = dataToColor->GetNumberOfPoints();
+		std::cout << "There are " << tableSize << " points." << std::endl;
+	}
+	else 
+	{
+		tableSize = dataToColor->GetNumberOfCells();
+		std::cout << "There are " << tableSize << " cells." << std::endl;
+	}
 
 	// Create a lookup table to map cell data to colors
 	vtkSmartPointer<vtkLookupTable> lookupTable =
@@ -170,33 +184,30 @@ void VTK_GUI_Qt::color_update()
 		colors->SetNumberOfComponents(3);
 		colors->SetName("Colors");
 
-	int tableSize = polydata->GetNumberOfCells();
-	std::cout << "There are " << tableSize << " cells." << std::endl;
-
 	int numberOfColors = tableSize;
 	MakeLUTFromCTF(scaleRange, numberOfColors, lookupTable);
-	//MakeLUTFromCTF(tableSize,   lookupTable);
 
 	vtkSmartPointer<vtkUnsignedCharArray> colorData =
 		vtkSmartPointer<vtkUnsignedCharArray>::New();
 	colorData->SetName("colors");
 	colorData->SetNumberOfComponents(3);
 
-	MakeCellData(tableSize, arrNum, polydata, lookupTable, colorData);
-	////MakeCellData(tableSize,  lookupTable, colorData);
+	MakeCellData(tableSize, arrNum, dataToColor, lookupTable, colorData);
 
 	if (this->radioButton->isChecked() == true)
-		polydata->GetPointData()->SetScalars(colors);
-	else 
-		polydata->GetCellData()->SetScalars(colorData);
+	{
+		dataToColor->GetPointData()->SetScalars(colors);
+	}
+	else
+	{
+		dataToColor->GetCellData()->SetScalars(colorData);
+	}
 
 	//Create a mapper and actor
 	vtkSmartPointer<vtkDataSetMapper> mapper =
 		vtkSmartPointer<vtkDataSetMapper>::New();
 
-	//mapper->SetInputConnection(mapperDataVector[sliderId]->GetOutputPort());
-
-	mapper->SetInputData(polydata);
+	mapper->SetInputData(dataToColor);
 	mapper->SetScalarRange(0, tableSize - 1);
 	mapper->SetLookupTable(lookupTable);
 	mapper->Update();
@@ -215,9 +226,53 @@ void VTK_GUI_Qt::color_update()
 	// VTK/Qt wedded
 	this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(renderer);
 
+	this->qvtkWidgetLeft->update();
+
 	cout << "QVTKWidget updated." << endl;
+
 }
 
+void VTK_GUI_Qt::color_unstructuredGrid(int arrNum)
+{
+	double arrayRange[2];
+	vtkSmartPointer<vtkUnstructuredGrid > dataToColor =
+		vtkSmartPointer<vtkUnstructuredGrid>::New();
+	dataToColor = vtkUnstructuredGrid::SafeDownCast(mapperDataVector[sliderId]->GetOutput());
+	dataToColor->GetCellData()->GetArray(arrNum)->GetRange(arrayRange);
+	cout << "Range of values for array" << arrayRange[0] << " " << arrayRange[1] << endl;
+	double scaleRange = arrayRange[1] - arrayRange[0];
+
+}
+
+void VTK_GUI_Qt::color_update()
+{
+	vtkSmartPointer<vtkNamedColors> nc =
+		vtkSmartPointer<vtkNamedColors>::New();
+
+	// Get the name and id of array used for coloring
+	QString arrName = this->comboBox->currentText();
+	int arrNum = this->comboBox->itemData(this->comboBox->currentIndex()).toInt();
+	cout << "Array: " << arrName.toStdString() << " " << arrNum << endl;
+	
+	//Check whenether file structure is Polydata or UnstructuredGrid
+	if (vtkPolyData::SafeDownCast(mapperDataVector[sliderId]->GetOutput()))
+	{
+		std::cout << "File is a polydata" << std::endl;
+		color_polydata(arrNum);
+	}
+	else if (vtkUnstructuredGrid::SafeDownCast(mapperDataVector[sliderId]->GetOutput()))
+	{
+		std::cout << "File is an unstructured grid" << std::endl;
+		color_unstructuredGrid(arrNum);
+	}
+}
+
+
+
+QStringList VTK_GUI_Qt::getFileNames()
+{
+	return QFileDialog::getOpenFileNames(this, tr("Choose"), "", tr("Vtk files (*.vtk)"));
+}
 
 void VTK_GUI_Qt::fill_data_vector(const QStringList &filenames)
 {
@@ -277,6 +332,7 @@ void  VTK_GUI_Qt::show_file()
 void  VTK_GUI_Qt::loading_files()
 {
 	QStringList files = getFileNames();
+	
 	if (files.empty())
 	{
 		return;
@@ -289,7 +345,6 @@ void  VTK_GUI_Qt::loading_files()
 	this->radioButton->setEnabled(true);
 	this->radioButton_2->setEnabled(true);
 
-//	cout << "Data size: " << mapperDataVector.size() << endl;
 	this->horizontalSlider->setMinimum(0);
 	this->horizontalSlider->setMaximum(polydataVector.size() - 1);
 

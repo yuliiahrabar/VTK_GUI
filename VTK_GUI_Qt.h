@@ -25,6 +25,7 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkLookupTable.h>
 #include <vtkFloatArray.h>
+#include <vtkUnstructuredGrid.h>
 
 class VTK_GUI_Qt : public QMainWindow, private Ui::VTK_GUI_Qt
 {
@@ -56,6 +57,8 @@ private slots:
 	void loading_files();
 	void show_file();
 	void color_update();
+	void color_polydata(int arrNum);
+	void color_unstructuredGrid(int arrNum);
 	void pointData_comboBox();
 	void cellData_comboBox();
 };
