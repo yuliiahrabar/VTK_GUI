@@ -160,7 +160,7 @@
     <property name="title">
      <string>Show/Hide Planes</string>
     </property>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="checkBoxX">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -179,7 +179,7 @@
       <string>X</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="checkBox_2">
+    <widget class="QCheckBox" name="checkBoxY">
      <property name="geometry">
       <rect>
        <x>100</x>
@@ -198,7 +198,7 @@
       <string>Y</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="checkBox_3">
+    <widget class="QCheckBox" name="checkBoxZ">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -230,7 +230,7 @@
     <property name="title">
      <string>Current Positions</string>
     </property>
-    <widget class="QSlider" name="verticalSlider">
+    <widget class="QSlider" name="verticalSliderX">
      <property name="geometry">
       <rect>
        <x>40</x>
@@ -239,11 +239,14 @@
        <height>191</height>
       </rect>
      </property>
+     <property name="value">
+      <number>50</number>
+     </property>
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
     </widget>
-    <widget class="QSlider" name="verticalSlider_2">
+    <widget class="QSlider" name="verticalSliderY">
      <property name="geometry">
       <rect>
        <x>110</x>
@@ -252,11 +255,14 @@
        <height>191</height>
       </rect>
      </property>
+     <property name="value">
+      <number>50</number>
+     </property>
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
     </widget>
-    <widget class="QSlider" name="verticalSlider_3">
+    <widget class="QSlider" name="verticalSliderZ">
      <property name="geometry">
       <rect>
        <x>180</x>
@@ -264,6 +270,9 @@
        <width>22</width>
        <height>191</height>
       </rect>
+     </property>
+     <property name="value">
+      <number>50</number>
      </property>
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -335,34 +344,52 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QSpinBox" name="spinBox">
+    <widget class="QSpinBox" name="spinBoxX">
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>50</y>
-       <width>41</width>
+       <y>60</y>
+       <width>42</width>
        <height>22</height>
       </rect>
      </property>
+     <property name="minimum">
+      <number>0</number>
+     </property>
+     <property name="maximum">
+      <number>99</number>
+     </property>
+     <property name="value">
+      <number>50</number>
+     </property>
     </widget>
-    <widget class="QSpinBox" name="spinBox_2">
+    <widget class="QSpinBox" name="spinBoxY">
      <property name="geometry">
       <rect>
        <x>100</x>
-       <y>50</y>
-       <width>41</width>
+       <y>60</y>
+       <width>42</width>
        <height>22</height>
       </rect>
      </property>
+     <property name="singleStep">
+      <number>1</number>
+     </property>
+     <property name="value">
+      <number>50</number>
+     </property>
     </widget>
-    <widget class="QSpinBox" name="spinBox_3">
+    <widget class="QSpinBox" name="spinBoxZ">
      <property name="geometry">
       <rect>
        <x>170</x>
-       <y>50</y>
-       <width>41</width>
+       <y>60</y>
+       <width>42</width>
        <height>22</height>
       </rect>
+     </property>
+     <property name="value">
+      <number>50</number>
      </property>
     </widget>
    </widget>
@@ -437,5 +464,102 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>spinBoxX</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>verticalSliderX</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>530</x>
+     <y>310</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>530</x>
+     <y>424</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBoxY</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>verticalSliderY</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>600</x>
+     <y>310</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>600</x>
+     <y>424</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBoxZ</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>verticalSliderZ</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>670</x>
+     <y>310</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>670</x>
+     <y>424</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>verticalSliderY</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>spinBoxY</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>600</x>
+     <y>424</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>600</x>
+     <y>310</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>verticalSliderZ</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>spinBoxZ</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>670</x>
+     <y>424</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>670</x>
+     <y>310</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>verticalSliderX</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>spinBoxX</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>530</x>
+     <y>424</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>530</x>
+     <y>310</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

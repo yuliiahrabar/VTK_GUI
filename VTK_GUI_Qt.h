@@ -5,7 +5,9 @@
 
 #include <QMainWindow>
 #include <QFileDialog>
-//#include <QMessageBox>
+#include <QMetaType>
+#include <QVariant>
+#include <QDebug>
 
 #include "ui_VTK_GUI_Qt.h"
 
@@ -27,8 +29,11 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkLookupTable.h>
 #include <vtkFloatArray.h>
-
-
+#include <vtkPlane.h>
+#include <vtkCutter.h>
+#include <vtkActor.h>
+#include <vtkProperty.h>
+#include <vtkPolyDataMapper.h>
 
 class VTK_GUI_Qt : public QMainWindow, private Ui::VTK_GUI_Qt
 {
@@ -59,10 +64,16 @@ private slots:
 	QStringList getFileNames();
 	void loading_files();
 	void show_file();
-	void color_update();
+	
+	void show_info();
+
 	void pointData_comboBox();
 	void cellData_comboBox();
-	void show_info();
+	void color_update();
+	void enable_planes();
+	void show_cutting_planes();
+
 };
+
 
 #endif
